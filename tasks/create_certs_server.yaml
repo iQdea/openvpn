@@ -1,0 +1,33 @@
+- name: "Create certs server | install easy-rsa package"
+  become: true
+  apt:
+    name:
+      - easy-rsa
+    state: "present"
+    update_cache: "yes"
+
+- name: "Create certs server  | create directory for easy-rsa"
+  file:
+    path: "{{ easy_rsa_dir }}"
+    state: "directory"
+    mode: "0700"
+
+- name: "Create certs server | add variables for server certificate authority"
+  template:
+    src: "{{ easy_rsa_vars_template }}"
+    dest: "{{ easy_rsa_dir }}/vars"
+
+- name: "Create certs server | init-pki (create Public Keys Infrastructure)"
+  command:
+    cmd: "{{ easy_rsa_binary }}/easyrsa init-pki"
+    chdir: "{{ easy_rsa_dir }}"
+    creates: "{{ easy_rsa_dir }}/pki"
+
+- name: "Create certs server | create authoruty cert & key"
+  command:
+    cmd: "{{ easy_rsa_binary }}/easyrsa build-ca nopass"
+    chdir: "{{ easy_rsa_dir }}"
+    creates: "{{ easy_rsa_dir }}/pki/ca.crt"
+  environment:
+    EASYRSA_BATCH: "yes"
+
